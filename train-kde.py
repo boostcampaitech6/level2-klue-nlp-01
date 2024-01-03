@@ -66,7 +66,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     args.train_path = os.path.join(TRAIN_DIR, 'train-v.0.0.2.csv')
-    args.dev_path = os.path.join(TRAIN_DIR, 'dev-v.0.0.2.csv')
+    args.dev_path = os.path.join(DEV_DIR, 'dev-v.0.0.2.csv')
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     
     train(args)
