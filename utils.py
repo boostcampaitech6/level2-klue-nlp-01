@@ -30,7 +30,7 @@ def train_valid_split(dataset, test_size=0.2, random_state=0, version='v.0.0.2')
     valid.reset_index(drop=True, inplace=True)
     
     train.to_csv(os.path.join(TRAIN_DIR, f'train-{version}.csv'), index=False)
-    valid.to_csv(os.path.join(DEV_DIR, f'dev-{version}.csv'))
+    valid.to_csv(os.path.join(DEV_DIR, f'dev-{version}.csv'), index=False)
     print(f'\nSucess Save Dataset [train, valid]')
     
     return train, valid 
