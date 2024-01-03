@@ -1,4 +1,4 @@
-import os 
+import os, types 
 import pandas as pd 
 
 from sklearn.model_selection import train_test_split
@@ -7,6 +7,28 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 
 from settings import * 
+
+def version_check(names=None):
+    if not names:
+        raise TypeError('please input package name! for example, numpy, pandas, matplotlib, etc.')
+
+    if isinstance(names, types.ModuleType):
+        exec('print(f"{names.__name__} version is {names.__version__}")')
+        
+    elif isinstance(names, list) and all(isinstance(name, types.ModuleType ) for name in names):
+        for name in names:
+            exec('print(f"{name.__name__} version is {name.__version__}")')
+    else:
+        raise ValueError
+
+def label_to_num(label):
+    num_label = []
+    with open(os.path.join(DATA_DIR, 'dict_label_to_num.pkl'), 'rb') as f:
+        dict_label_to_num = pickle.load(f)
+    for v in label:
+        num_label.append(dict_label_to_num[v])
+  
+    return num_label
 
 def train_valid_split(dataset, test_size=0.2, random_state=0, version='v.0.0.2'):
     '''
