@@ -46,7 +46,7 @@ def train(args):
     )
     
     trainer.train()
-    torch.save(model, os.path.join(f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
+    torch.save(model, os.path.join(f'{train_args.output_dir}/{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

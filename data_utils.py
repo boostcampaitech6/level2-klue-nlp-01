@@ -8,6 +8,13 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer 
 from utils import label_to_num
 
+import yaml
+from box import Box
+conf_url = 'config.yaml'
+with open(conf_url, 'r') as f:
+	config_yaml = yaml.load(f, Loader=yaml.FullLoader)
+config = Box(config_yaml)
+
 class ReDataset(Dataset):
     def __init__(self, args, types='train'):
         if types=='train':
@@ -19,10 +26,9 @@ class ReDataset(Dataset):
         else:
             self.datasets = self.preprocessing(self.load_data(args.test_path))
             self.labels = label_to_num(self.load_data(args.test_path)['label'])
-            
         
         self.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        self.max_length = args.max_length
+        self.max_length = config.max_length
 
         self.datasets = self.tokenizing(self.datasets)
 
