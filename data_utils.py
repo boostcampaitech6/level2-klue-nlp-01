@@ -17,6 +17,7 @@ config = Box(config_yaml)
 
 class ReDataset(Dataset):
     def __init__(self, args, types='train'):
+	self.types = types 
         if types=='train':
             self.datasets = self.preprocessing(self.load_data(args.train_path))
             self.labels = label_to_num(self.load_data(args.train_path)['label'])
@@ -33,8 +34,13 @@ class ReDataset(Dataset):
         self.datasets = self.tokenizing(self.datasets)
 
     def __getitem__(self, idx):
-        item = {key: val[idx].clone().detach() for key, val in self.datasets.items()}
-        return item, torch.tensor(self.labels[idx])
+	if self.types in ['train', 'dev']:
+	    item = {key: val[idx].clone().detach() for key, val in self.datasets.items()}
+	    item['label'] = torch.tensor(self.labels[idx])
+	    return item
+	else:
+            item = {key: val[idx].clone().detach() for key, val in self.datasets.items()}
+            return item, torch.tensor(self.labels[idx])
 
     def __len__(self):
         return len(self.labels)
