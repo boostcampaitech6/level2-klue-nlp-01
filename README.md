@@ -26,7 +26,7 @@
 **1.clone this repository**
 ``` 
 git clone https://github.com/boostcampaitech6/level2-klue-nlp-01.git
-cd level2-klue-nlp-0
+cd level2-klue-nlp-01
 ```
 
 **2.build Dockerfile**
