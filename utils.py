@@ -1,5 +1,7 @@
-import os, types, pickle
+import os, types, pickle 
 import pandas as pd 
+
+import argparse
 
 from sklearn.model_selection import train_test_split
 
@@ -75,3 +77,22 @@ def plot_hist(li: list, bins=50, title=None, xlabel=None, ylabel=None, f_name='f
     if save:
         plt.savefig(os.path.join(FIG_DIR, f'{f_name}'), dpi=200)
     plt.show()
+
+
+# data split
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--seed', default=0, type=int
+    )
+    parser.add_argument(
+        '--test_size', default=0.2, type=float
+    )
+    parser.add_argument(
+        '--version', '-V', default='v.0.0.2',type=str 
+    )
+    
+    args = parser.parse_args()
+    
+    dataset = pd.read_csv(os.path.join(TRAIN_DIR, 'train.csv'))
+    train, valid = train_valid_split(dataset, test_size=0.2, random_state=args.seed, version='v.0.0.2')
