@@ -32,6 +32,15 @@ def label_to_num(label):
   
     return num_label
 
+def num_to_label(label):
+  origin_label = []
+  with open(os.path.join(DATA_DIR,'dict_num_to_label.pkl'), 'rb') as f:
+    dict_num_to_label = pickle.load(f)
+  for v in label:
+    origin_label.append(dict_num_to_label[v])
+  
+  return origin_label
+
 def train_valid_split(dataset, test_size=0.2, random_state=0, version='v.0.0.2'):
     '''
     train valid split 
