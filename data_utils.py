@@ -34,8 +34,7 @@ class ReDataset(Dataset):
 
     def __getitem__(self, idx):
         item = {key: val[idx].clone().detach() for key, val in self.datasets.items()}
-        item['label'] = torch.tensor(self.labels[idx])
-        return item
+        return item, torch.tensor(self.labels[idx])
 
     def __len__(self):
         return len(self.labels)
