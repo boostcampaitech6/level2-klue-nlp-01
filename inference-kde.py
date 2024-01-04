@@ -46,10 +46,10 @@ if __name__ == '__main__':
     args.dev_path = os.path.join(DEV_DIR, 'dev-v.0.0.2.csv')
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-    tokenizer = AutoTokenizer.from_pretrained('klue/roberta-large')
-    model = AutoModelForSequenceClassification.from_pretrained('klue/roberta-large', num_labels=30)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=30)
     
-    model.load_state_dict(torch.load(os.path.join(BASE_DIR, 'parameters/roberta-large/checkpoint-12000/pytorch_model.bin')))
+    model.load_state_dict(torch.load(os.path.join(BASE_DIR, args.save_path)))
 
     test_dataset = ReDataset(args, types='dev')
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
