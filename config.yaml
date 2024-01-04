@@ -1,0 +1,10 @@
+model_name: 'klue/roberta-small'
+batch_size: 64
+max_epoch: 1
+learning_rate: '5e-5'
+weight_decay: '0.01'
+num_labels: 30
+max_length: 256
+train_path: 'train-v.0.0.2.csv'
+dev_path: 'dev-v.0.0.2.csv'
+test_path: 'test.csv'
