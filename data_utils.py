@@ -49,7 +49,7 @@ class ReDataset(Dataset):
     def tokenizing(self, datasets):
         concat_entity = []
         for idx, rows in datasets.iterrows():
-            temp = rows['subject_entity'] + '[SEP]' + rows['object_entity'] + rows['sentence']
+            temp = rows['subject_entity'] + '[SEP]' + rows['object_entity'] + '[SEP]' + rows['sentence']
             concat_entity.append(temp)
             
         tokenized_sentences = self.tokenizer(
