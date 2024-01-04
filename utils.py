@@ -1,4 +1,4 @@
-import os, types 
+import os, types, pickle
 import pandas as pd 
 
 from sklearn.model_selection import train_test_split
