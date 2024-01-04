@@ -7,4 +7,11 @@ num_labels: 30
 max_length: 256
 train_path: 'train-v.0.0.2.csv'
 dev_path: 'dev-v.0.0.2.csv'
-test_path: 'test.csv'
+test_path: 'test_data.csv'
+
+# inference
+model_dir: 'roberta-small/roberta-small-64-5e-05.pt'
+
+# wandb
+entity: kunha98
+project: test
