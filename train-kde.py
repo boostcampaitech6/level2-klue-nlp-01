@@ -5,6 +5,7 @@ from transformers import AutoModelForSequenceClassification, TrainingArguments, 
 from settings import * 
 from metrics import compute_metrics
 from data_utils import ReDataset 
+import wandb 
 
 import yaml
 from box import Box
@@ -14,17 +15,38 @@ with open(conf_url, 'r') as f:
 config = Box(config_yaml)
 
 def train(args):
-    train_set = ReDataset(args, types='train')
-    dev_set = ReDataset(args, types='dev')
+    x_train = preprocessing(load_data(args.train_path))
+    y_train = label_to_num(load_data(args.train_path)['label'])
+    
+    x_valid = preprocessing(load_data(args.dev_path))
+    y_valid = label_to_num(load_data(args.dev_path)['label'])
+    
+    for data in [x_train, x_valid]:
+        subject = data.loc[:, 'subject_entity'].values.tolist()
+        subject = [re.sub('[^가-힣ㄱ-ㅎㅏ-ㅣ ]', '', sub).strip() for sub in subject]
+        subject = list(set([sub for sub in subject if sub and ' ' not in sub]))
+    
+        objects = data.loc[:, 'object_entity'].values.tolist()
+        objects = [re.sub('[^가-힣ㄱ-ㅎㅏ-ㅣ ]', '', obj).strip() for obj in objects]
+        objects = list(set([obj for obj in objects if obj and ' ' not in obj]))
+        args.tokenizer.add_tokens(subject)
+        args.tokenizer.add_tokens(objects)
+    
+        print(f'Add Token size is {len(objects) + len(subject)}')
+    print(f'Total Tokenizer length: {len(args.tokenizer)}')
+    
+    train_set = ReDataset(args,x_train, y_train, types='train')
+    dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
     model.to(args.device)
+    model.resize_token_embeddings(len(train_set.tokenizer))
     
     train_args = TrainingArguments(
-        output_dir = f'{PARAM_DIR}/{args.model_name.split("/")[-1]}', 
+        output_dir = f'{args.model_name}-{args.batch_size}-{args.learning_rate}', 
         save_total_limit=10, 
-        save_steps=500, 
-        num_train_epochs=args.max_epoch, 
+        save_steps=1000, 
+        num_train_epochs=20, 
         learning_rate=args.learning_rate, 
         per_device_train_batch_size=args.batch_size, 
         per_device_eval_batch_size=args.batch_size, 
@@ -44,9 +66,8 @@ def train(args):
         eval_dataset=dev_set, 
         compute_metrics=compute_metrics
     )
-    
     trainer.train()
-    torch.save(model, os.path.join(f'{train_args.output_dir}/{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
+    torch.save(model.state_dict(), os.path.join(f'{train_args.output_dir}/{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -76,5 +97,17 @@ if __name__ == '__main__':
     args.train_path = os.path.join(TRAIN_DIR, config.train_path)
     args.dev_path = os.path.join(DEV_DIR, config.dev_path)
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    
+    args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+
+    # wandb.login()
+    # wandb.init(
+    #     entity='boostcamp-ai-tech-01',
+    #     project= 'Level02', 
+    #     name=f'{args.model_name}-{args.batch_size}-{args.learning_rate}',
+    #     config= {
+    #         'learning_rate': args.learning_rate, 
+    #         'batch_size': args.batch_size, 
+    #         'model_name': args.model_name
+    #     }
+    # )
     train(args)
