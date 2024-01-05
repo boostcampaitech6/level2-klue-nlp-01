@@ -2,6 +2,7 @@ import os, types, pickle
 import pandas as pd 
 
 import argparse
+from ast import literal_eval
 
 from sklearn.model_selection import train_test_split
 
@@ -9,6 +10,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 
 from settings import * 
+
+def load_data(path):
+    return pd.read_csv(path)
+
+def preprocessing(datasets):
+    target_col = ['sentence', 'subject_entity', 'object_entity', 'label']
+    for column in ['subject_entity', 'object_entity']:
+        datasets.loc[:, column] = datasets.loc[:, column].apply(lambda x: literal_eval(x)['word'])
+    return datasets.loc[:, target_col].copy()
+
 
 def version_check(names=None):
     if not names:
@@ -28,11 +39,17 @@ def label_to_num(label):
     with open(os.path.join(DATA_DIR, 'dict_label_to_num.pkl'), 'rb') as f:
         dict_label_to_num = pickle.load(f)
     for v in label:
-        num_label.append(dict_label_to_num[v])
+        try:
+            num_label.append(dict_label_to_num[v])
+        except:
+            num_label.append(10)
   
     return num_label
 
 def num_to_label(label):
+  """
+    숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
+  """
   origin_label = []
   with open(os.path.join(DATA_DIR,'dict_num_to_label.pkl'), 'rb') as f:
     dict_num_to_label = pickle.load(f)
