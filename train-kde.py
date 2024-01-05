@@ -40,7 +40,7 @@ def train(args):
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
     model.to(args.device)
-    model.resize_token_embeddings(len(train_set.tokenizer))
+    model.resize_token_embeddings(len(args.tokenizer))
     
     train_args = TrainingArguments(
         output_dir = f'{args.model_name}-{args.batch_size}-{args.learning_rate}', 
