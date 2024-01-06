@@ -1,14 +1,18 @@
 import argparse 
 import os
 import torch
-from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
+from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer, AutoTokenizer
 from settings import * 
 from metrics import compute_metrics
 from data_utils import ReDataset 
-import wandb 
+import wandb
+import re
+from utils import *
 
 import yaml
 from box import Box
+
+
 conf_url = 'config.yaml'
 with open(conf_url, 'r') as f:
 	config_yaml = yaml.load(f, Loader=yaml.FullLoader)
@@ -99,15 +103,15 @@ if __name__ == '__main__':
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
-    # wandb.login()
-    # wandb.init(
-    #     entity='boostcamp-ai-tech-01',
-    #     project= 'Level02', 
-    #     name=f'{args.model_name}-{args.batch_size}-{args.learning_rate}',
-    #     config= {
-    #         'learning_rate': args.learning_rate, 
-    #         'batch_size': args.batch_size, 
-    #         'model_name': args.model_name
-    #     }
-    # )
+    wandb.login()
+    wandb.init(
+        entity='boostcamp-ai-tech-01',
+        project= 'Level02', 
+        name=f'{args.model_name}-{args.batch_size}-{args.learning_rate}',
+        config= {
+            'learning_rate': args.learning_rate, 
+            'batch_size': args.batch_size, 
+            'model_name': args.model_name
+        }
+    )
     train(args)
