@@ -1,5 +1,9 @@
-dataset/
 __pycache__/
 .github/
 asset/
+dataset/
 parameters/
+wandb/
+klue/
+result/
+config.yaml
