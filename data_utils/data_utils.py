@@ -4,7 +4,7 @@ import torch
 import pandas as pd 
 
 from torch.utils.data import Dataset, DataLoader
-from utils import tokenizing
+from utils.preprocessing import tokenizing
 
 class ReDataset(Dataset):
     def __init__(self, args:dict, X:pd.DataFrame, y:list, types='train'):
@@ -14,7 +14,7 @@ class ReDataset(Dataset):
         self.labels = y 
 
         self.max_length = args.max_length
-        self.datasets = tokenizing(self.datasets)
+        self.datasets = tokenizing(args, self.datasets)
 
     def __getitem__(self, idx):
         if self.types in ['train', 'dev']:
