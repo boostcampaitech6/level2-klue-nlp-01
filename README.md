@@ -12,12 +12,6 @@
 |-- data_utils
 |   |-- __init__.py
 |   `-- data_utils.py
-`-- utils
-|   |-- __init__.py
-|   |-- preprocessing.py
-|   `-- utils.py
-|-- inference.py
-|-- lost+found
 |-- metrics
 |   |-- __init__.py
 |   `-- metrics.py
@@ -25,11 +19,14 @@
 |   `-- roberta-small-128-5e-05.pt
 |-- results
 |   `-- roberta-submission.pt
+`-- utils
+|   |-- __init__.py
+|   |-- preprocessing.py
+|   `-- utils.py
+|-- inference.py
 |-- requirements.txt
 |-- settings.py
 |-- train.py
-
-
 ```
 
 
