@@ -4,7 +4,8 @@ import torch
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer, AutoTokenizer 
 from settings import * 
 
-from utils import load_data, preprocessing, label_to_num
+from utils.utils import load_data, label_to_num
+from utils.preprocessing import preprocess
 from metrics.metrics import compute_metrics, FocalLoss
 from data_utils.data_utils import ReDataset 
 import wandb
@@ -14,11 +15,13 @@ from transformers import Trainer
 def train(args):
     # x_train = preprocessing(load_data(args.train_path))
     # y_train = label_to_num(load_data(args.train_path)['label'])
-    
     # x_valid = preprocessing(load_data(args.dev_path))
     # y_valid = label_to_num(load_data(args.dev_path)['label'])
-    x_train, y_train = preprocessing(args.train_path)
-    x_valid, y_valid = preprocessing(args.dev_path)
+
+    # x_train = preprocessing(load_data(args.train_path))
+    # x_valid = preprocessing(load_data(args.dev_path))
+    x_train, y_train = preprocess(args.train_path)
+    x_valid, y_valid = preprocess(args.dev_path)
     
 
     train_set = ReDataset(args,x_train, y_train, types='train')
