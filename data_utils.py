@@ -3,6 +3,7 @@ import torch
 from tqdm.auto import tqdm 
 
 from torch.utils.data import Dataset 
+from utils import tokenizing
 
 class ReDataset(Dataset):
     def __init__(self, args, X, y, types='train'):
@@ -12,7 +13,7 @@ class ReDataset(Dataset):
         self.labels = y 
 
         self.max_length = args.max_length
-        self.datasets = self.tokenizing(self.datasets)
+        self.datasets = tokenizing(self.datasets)
 
     def __getitem__(self, idx):
         if self.types in ['train', 'dev']:
@@ -28,19 +29,3 @@ class ReDataset(Dataset):
 
     def df2list(self, data):
         return data.values.tolist()
-    
-    def tokenizing(self, datasets):
-        concat_entity = []
-        for idx, rows in tqdm(datasets.iterrows(), total=datasets.shape[0], desc=f'{self.types.title()}set Tokenizing...'):
-            temp = rows['subject_entity'] + '[SEP]' + rows['object_entity'] + '[SEP]' + rows['sentence']
-            concat_entity.append(temp)
-            
-        tokenized_sentences = self.tokenizer(
-            concat_entity, 
-            return_tensors='pt', 
-            padding=True, 
-            truncation=True, 
-            max_length=self.max_length, 
-            add_special_tokens=True
-        )
-        return tokenized_sentences

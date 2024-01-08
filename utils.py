@@ -1,6 +1,8 @@
 import os, types, pickle 
 import pandas as pd 
 
+from tqdm.auto import tqdm 
+
 import argparse
 from ast import literal_eval
 
@@ -10,51 +12,34 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 
 from settings import * 
-from preprocess.preprocess_marker import *
-
 
 def load_data(path):
     return pd.read_csv(path)
 
+############################### Preprocessing ###############################
 def preprocessing(datasets):
     target_col = ['sentence', 'subject_entity', 'object_entity', 'label']
     for column in ['subject_entity', 'object_entity']:
-        datasets.loc[:, column] = datasets.loc[:, column].apply(lambda x: literal_eval(x)['word'])
+        datasets.loc[:, column] = datasets.loc[:, column].apply(lambda x: f"[{literal_eval(x)['type']}]" +  literal_eval(x)['word'] + f"[{literal_eval(x)['type']}]")
     return datasets.loc[:, target_col].copy()
 
-def preprocessing_MARKER(df: pd.DataFrame, method:str='none') -> pd.DataFrame:
-    """Generate dataframe after Marker preprocessing
 
-        Args:
-        df (pd.DataFrame): raw dataset
-        method (str): em, tem, temp     
-            em: Entity Mask
-            ex) Bill was born in Seattle-> [SUBJ-PERSON] was born in [OBJ-CITY]
-
-            tem: Typed Entity Marker
-            ex) Bill was born in Seattle -> 
-            <S:PERSON>Bill</S:PERSON> was born in <O:CITY>Seattle</O:CITY>
-
-            temp: Typed entity marker (punct)
-            ex) Bill was born in Seattle -> 
-            @*person*Bill@ was born in #^Seattle^#
-
-    Returns:
-        pd.DataFrame: dataframe with MARKER
-    """
-    df_mark = df.copy()
-
-    for idx in range(len(df)):
-        # Data Sentence, Subject_entity, Object_entity 추출
-        row = df.iloc[idx,:]
-        sen, sbj, obj = row['sentence'], literal_eval(row['subject_entity']), literal_eval(row['object_entity'])
-
-        sbj_word, obj_word = get_marker_tag(sen, sbj, obj, method)
-
-        sen = replace_string_index(sen, sbj, obj, sbj_word, obj_word)
-        df_mark.iloc[idx,1] = sen
-
-    return df_mark
+def tokenizing(datasets, tokenizer, max_length):
+    concat_entity = []
+    for idx, rows in tqdm(datasets.iterrows(), total=datasets.shape[0], desc='Dataset Tokenizing...'):
+        temp = rows['subject_entity'] + '[SEP]' + rows['object_entity'] + '[SEP]' + rows['sentence']
+        concat_entity.append(temp)
+        
+    tokenized_sentences = tokenizer(
+        concat_entity, 
+        return_tensors='pt', 
+        padding=True, 
+        truncation=True, 
+        max_length=max_length, 
+        add_special_tokens=True
+    )
+    return tokenized_sentences
+############################### Preprocessing ###############################
 
 def version_check(names=None):
     if not names:
@@ -69,6 +54,7 @@ def version_check(names=None):
     else:
         raise ValueError
 
+
 def label_to_num(label):
     num_label = []
     with open(os.path.join(DATA_DIR, 'dict_label_to_num.pkl'), 'rb') as f:
@@ -80,6 +66,7 @@ def label_to_num(label):
             num_label.append(10)
   
     return num_label
+
 
 def num_to_label(label):
   """
@@ -156,4 +143,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     dataset = pd.read_csv(os.path.join(TRAIN_DIR, 'train.csv'))
-    train, valid = train_valid_split(dataset, test_size=0.2, random_state=args.seed, version='v.0.0.2')
+    train, valid = train_valid_split(dataset, test_size=args.test_size, random_state=args.seed, version=args.version)

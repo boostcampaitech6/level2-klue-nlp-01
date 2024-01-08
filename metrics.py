@@ -1,5 +1,25 @@
 import numpy as np 
+import torch 
+import torch.nn as nn 
+import torch.nn.functional as F 
+from torch.autograd import Variable 
 from sklearn.metrics import precision_recall_curve, auc, f1_score, accuracy_score
+
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=2, size_average=True):
+        super(FocalLoss, self).__init__()
+        self.gamma = gamma
+        self.size_average = size_average
+
+    def forward(self, input, target):
+        target = target.view(-1,1)
+
+        log_prob = F.log_softmax(input, dim=-1)
+        prob = log_prob.exp()
+        loss = -1 * (1-prob)**self.gamma * log_prob
+        if self.size_average: return loss.mean()
+        else: return loss.sum()
+
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
