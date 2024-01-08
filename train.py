@@ -11,7 +11,16 @@ from data_utils.data_utils import ReDataset
 import wandb
 from transformers import Trainer 
 
-
+class CustomTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        model.cuda()
+        labels = inputs.get('labels')
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+        loss_fct = FocalLoss(gamma=2)
+        # loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        loss = loss_fct(logits, labels)
+        return (loss, outputs) if return_outputs else loss 
 def train(args):
     # x_train = preprocessing(load_data(args.train_path))
     # y_train = label_to_num(load_data(args.train_path)['label'])
@@ -29,12 +38,12 @@ def train(args):
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
     model.to(args.device)
-    model.resize_token_embeddings(len(args.tokenizer))
+    # model.resize_token_embeddings(len(args.tokenizer))
     print(f'Tokenizer Size is {len(args.tokenizer)}')
     
     train_args = TrainingArguments(
         output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
-        save_total_limit=10, 
+        save_total_limit=5, 
         save_steps=1000, 
         num_train_epochs=20, 
         learning_rate=args.learning_rate, 
@@ -48,16 +57,15 @@ def train(args):
         eval_steps=500, 
         load_best_model_at_end=True 
     )
-    
-    class CustomTrainer(Trainer):
-        def compute_loss(self, model, inputs, return_outputs=False):
-            labels = inputs.get('labels')
-            outputs = model(**inputs)
-            logits = outputs.get('logits')
-            loss_fct = FocalLoss(gamma=2)
-            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-            return (loss, outputs) if return_outputs else loss 
 
+    # class CustomTrainer(Trainer):
+    # def compute_loss(self, model, inputs, return_outputs=False):
+    #     labels = inputs.get('labels')
+    #     outputs = model(**inputs)
+    #     logits = outputs.get('logits')
+    #     loss_fct = FocalLoss(gamma=2)
+    #     loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+    #     return (loss, outputs) if return_outputs else loss 
     trainer = CustomTrainer(
         model=model, 
         args=train_args, 
