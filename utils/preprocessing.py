@@ -2,7 +2,7 @@ from tqdm.auto import tqdm
 from ast import literal_eval
 from utils.utils import load_data, label_to_num
 import re 
-
+from transformers import AutoTokenizer
 """
 작성자: 김인수, 이재형
 """
@@ -34,18 +34,18 @@ def preprocess(path, marker_type = 'temp'):
     y = label_to_num(datasets.loc[:, y_col].values)
     return X, y
 
-def tokenizing(datasets, tokenizer, max_length, marker_type = 'temp'):
+def tokenizing(args:dict, datasets, marker_type = 'temp'):
     """_summary_
 
     Args:
+        args (dict): model_name, max_length
         datasets (pd.Dataframe): 'sentence', 'subject_entity', 'object_entity' columns Dataframe
-        tokenizer (str): tokenizer_name 
-        max_length (int): tokenizer max_length
         marker_type (str, optional): Defaults to 'temp'.
 
     Returns:
         tokenized_sentences: tokenized_sentences
     """    
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     concat_entity = []
     for idx, row in tqdm(datasets.iterrows(), total = datasets.shape[0], desc = "Dataset Tokenizing..."):
         sbj, obj = literal_eval(row['subject_entity']), literal_eval(row['object_entity'])
@@ -64,7 +64,7 @@ def tokenizing(datasets, tokenizer, max_length, marker_type = 'temp'):
         return_tensors='pt', 
         padding=True, 
         truncation=True, 
-        max_length=max_length, 
+        max_length= args.max_length, 
         add_special_tokens=True
     )
     return tokenized_sentences
