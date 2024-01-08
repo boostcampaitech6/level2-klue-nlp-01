@@ -1,4 +1,8 @@
-import os, types, pickle 
+'''
+Author: DongEon, Kim
+'''
+
+import os, types, pickle, yaml
 import pandas as pd 
 
 from tqdm.auto import tqdm 
@@ -13,16 +17,18 @@ import seaborn as sns
 
 from settings import * 
 
-def load_data(path):
-    return pd.read_csv(path)
-
 ############################### Preprocessing ###############################
-def preprocessing(datasets):
-    target_col = ['sentence', 'subject_entity', 'object_entity', 'label']
+def preprocessing(path):
+    datasets = load_data(path)
+    X_col, y_col = ['sentence', 'subject_entity', 'object_entity'], ['label']
+    
+    X = datasets.loc[:, X_col].copy()
+    y = label_to_num(datasets.loc[:, y_col])
+    
     for column in ['subject_entity', 'object_entity']:
-        datasets.loc[:, column] = datasets.loc[:, column].apply(lambda x: f"[{literal_eval(x)['type']}]" +  literal_eval(x)['word'] + f"[{literal_eval(x)['type']}]")
-    return datasets.loc[:, target_col].copy()
-
+        X.loc[:, column] = X.loc[:, column].apply(lambda x: literal_eval(x)['word']) # default.
+        
+    return X, y
 
 def tokenizing(datasets, tokenizer, max_length):
     concat_entity = []
@@ -41,6 +47,25 @@ def tokenizing(datasets, tokenizer, max_length):
     return tokenized_sentences
 ############################### Preprocessing ###############################
 
+def load_data(path):
+    return pd.read_csv(path)
+
+def load_config(config_file):
+    with open(config_file) as file:
+        config = yaml.safe_load(file)
+    return config
+
+def save_pkl(file, fname):
+    with open(f'./{fname}.pkl', mode='wb') as f:
+        pickle.dump(file, f)
+    print(f'Success Saving File! PATH: ./{fname}.pkl')
+
+def load_pkl(path):
+    with open(path, mode='rb') as f:
+        file = pickle.load(f)
+    return file 
+
+
 def version_check(names=None):
     if not names:
         raise TypeError('please input package name! for example, numpy, pandas, matplotlib, etc.')
@@ -57,24 +82,17 @@ def version_check(names=None):
 
 def label_to_num(label):
     num_label = []
-    with open(os.path.join(DATA_DIR, 'dict_label_to_num.pkl'), 'rb') as f:
-        dict_label_to_num = pickle.load(f)
+    path = os.path.join(DATA_DIR, 'dict_label_to_num.pkl')
+    dict_label_to_num = load_pkl(path)
     for v in label:
-        try:
-            num_label.append(dict_label_to_num[v])
-        except:
-            num_label.append(10)
-  
+        num_label.append(dict_label_to_num[v])
     return num_label
 
 
 def num_to_label(label):
-  """
-    숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
-  """
   origin_label = []
-  with open(os.path.join(DATA_DIR,'dict_num_to_label.pkl'), 'rb') as f:
-    dict_num_to_label = pickle.load(f)
+  path = os.path.join(DATA_DIR,'dict_num_to_label.pkl')
+  dict_num_to_label = load_pkl(path)
   for v in label:
     origin_label.append(dict_num_to_label[v])
   
@@ -101,8 +119,8 @@ def train_valid_split(dataset, test_size=0.2, random_state=0, version='v.0.0.2')
     train.reset_index(drop=True, inplace=True)
     valid.reset_index(drop=True, inplace=True)
     
-    train.to_csv(os.path.join(TRAIN_DIR, f'train-{version}.csv'), index=False)
-    valid.to_csv(os.path.join(DEV_DIR, f'dev-{version}.csv'), index=False)
+    train.to_csv(os.path.join(DATA_DIR, f'train-{version}.csv'), index=False)
+    valid.to_csv(os.path.join(DATA_DIR, f'dev-{version}.csv'), index=False)
     print(f'\nSucess Save Dataset [train, valid]')
     
     return train, valid 
@@ -139,8 +157,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--version', '-V', default='v.0.0.2',type=str 
     )
+    parser.add_argument(
+        '--train_path', default='train.csv', type=str
+    )
     
     args = parser.parse_args()
     
-    dataset = pd.read_csv(os.path.join(TRAIN_DIR, 'train.csv'))
+    dataset = pd.read_csv(os.path.join(DATA_DIR, args.train_path))
     train, valid = train_valid_split(dataset, test_size=args.test_size, random_state=args.seed, version=args.version)
