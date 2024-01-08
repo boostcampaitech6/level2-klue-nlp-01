@@ -7,7 +7,6 @@ import re
 작성자: 김인수, 이재형
 """
 
-
 ############################### Preprocessing ###############################
 def preprocess(path, marker_type = 'temp'):
     """_summary_
@@ -39,13 +38,13 @@ def tokenizing(datasets, tokenizer, max_length, marker_type = 'temp'):
     """_summary_
 
     Args:
-        datasets (_type_): _description_
-        tokenizer (_type_): _description_
-        max_length (_type_): _description_
-        marker_type (str, optional): _description_. Defaults to 'temp'.
+        datasets (pd.Dataframe): 'sentence', 'subject_entity', 'object_entity' columns Dataframe
+        tokenizer (str): tokenizer_name 
+        max_length (int): tokenizer max_length
+        marker_type (str, optional): Defaults to 'temp'.
 
     Returns:
-        _type_: _description_
+        tokenized_sentences: tokenized_sentences
     """    
     concat_entity = []
     for idx, row in tqdm(datasets.iterrows(), total = datasets.shape[0], desc = "Dataset Tokenizing..."):
