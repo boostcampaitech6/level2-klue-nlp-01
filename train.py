@@ -5,7 +5,7 @@ from transformers import AutoModelForSequenceClassification, TrainingArguments, 
 from settings import * 
 
 from utils.preprocessing import preprocess
-from utils.utils import load_pkl, build_unk_tokens
+from utils.utils import load_pkl, build_unk_tokens, save_pkl
 from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
@@ -23,6 +23,7 @@ def train(args):
             for data in [x_train, x_valid, x_test]:
                 unk = build_unk_tokens(data, args.tokenizer, verbose=args.verbose)
                 unk_list.extend(unk)
+            save_pkl(unk_list, os.path.join(DATA_DIR, 'unk_tokens.pkl'))
         else:
             unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
             
@@ -75,9 +76,13 @@ def train(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    
+    # model name 
     parser.add_argument(
         '--model_name', required=True, type=str 
     )
+    
+    # hyper-parameters 
     parser.add_argument(
         '--max_length', '-len', default=256, type=int
     )
@@ -97,6 +102,11 @@ if __name__ == '__main__':
         '--gamma', '-g', default=2., type=float
     )
     parser.add_argument(
+        '--device', default='cuda:0', type=str
+    )
+    
+    # path 
+    parser.add_argument(
         '--train_path', default='train-v.0.0.2.csv', type=str
     )
     parser.add_argument(
@@ -105,9 +115,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--test_path', default='test.csv', type=str
     )
-    parser.add_argument(
-        '--device', default='cuda:0', type=str
-    )
+
+    # wandb
     parser.add_argument(
         '--wandb', default=False, action='store_true'
     )
@@ -117,6 +126,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--project', default='Level02', type=str
     )
+    
+    # focal loss 
     parser.add_argument(
         '--focal_loss', action='store_true'
     )
