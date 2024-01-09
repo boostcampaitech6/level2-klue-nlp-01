@@ -32,9 +32,10 @@ def train(args):
     train_set = ReDataset(args,x_train, y_train, types='train')
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
-
-    pretrained_dict = torch.load('/data/ephemeral/roberta-large-pretrained/roberta-large-64-5e-05.pt') # pretrained 상태 로드
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
+
+    # TAPT
+    pretrained_dict = torch.load('/data/ephemeral/roberta-small-pretrained/roberta-small-128-5e-05.pt') # pretrained 상태 로드
     model_dict = model.state_dict() # 현재 신경망 상태 로드
     # 1. filter out unnecessary keys
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
@@ -42,6 +43,16 @@ def train(args):
     model_dict.update(pretrained_dict) 
     # 3. load the new state dict
     model.load_state_dict(model_dict)
+    """
+    #HEAD만
+    for name, param in model.named_parameters():
+        if name.split('.')[0] == 'classifier':
+            pass
+        else :
+            param.requires_grad = False
+    for name, param in model.named_parameters():
+        print(name, param.requires_grad)
+    """
 
     model.to(args.device)
 
@@ -65,7 +76,8 @@ def train(args):
         eval_steps=500, 
         load_best_model_at_end=True, 
         metric_for_best_model='micro f1 score', 
-        greater_is_better=True
+        greater_is_better=True,
+        seed=42
     )
     
     train_args.focal_loss = args.focal_loss
@@ -89,18 +101,18 @@ if __name__ == '__main__':
     
     # model name 
     parser.add_argument(
-        '--model_name', default='klue/roberta-large', type=str 
+        '--model_name', default='klue/roberta-small', type=str 
     )
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=128, type=int
+        '--max_length', '-len', default=256, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=64, type=int
+        '--batch_size', '-b', default=128, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
@@ -123,7 +135,7 @@ if __name__ == '__main__':
         '--dev_path', default='dev-v.0.0.2.csv', type=str
     )
     parser.add_argument(
-        '--test_path', default='test.csv', type=str
+        '--test_path', default='test_data.csv', type=str
     )
 
     # wandb

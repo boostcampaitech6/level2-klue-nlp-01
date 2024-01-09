@@ -36,9 +36,9 @@ def inference(args, model, dataloader):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # model dir
-    parser.add_argument('--model_name', default='klue/roberta-large', type=str)
-    parser.add_argument('--save_path', default='/data/ephemeral/parameters/roberta-large-64-5e-05.pt', type=str)
-    parser.add_argument('--batch_size', '-b', default=64)
+    parser.add_argument('--model_name', default='klue/roberta-small', type=str)
+    parser.add_argument('--save_path', default='/data/ephemeral/parameters/roberta-small-128-5e-05_raw.pt', type=str)
+    parser.add_argument('--batch_size', '-b', default=128)
     parser.add_argument('--num_labels', default=30, type=int)
     parser.add_argument('--f_name', default='submission')
     parser.add_argument('--max_length', default=128)
