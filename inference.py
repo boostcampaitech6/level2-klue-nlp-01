@@ -11,7 +11,7 @@ import argparse
 from tqdm.auto import tqdm 
 
 from utils.utils import num_to_label, load_pkl
-from utils.preprocessing import preprocessing
+from utils.preprocessing import preprocess
 from data_utils.data_utils import get_dataloader
 from settings import * 
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     args.test_path = os.path.join(DATA_DIR, args.test_path)
 
     # Preprocessing...
-    x_test, y_test = preprocessing(args.test_path)
+    x_test, y_test = preprocess(args.test_path)
     
     # Load Model
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
