@@ -2,12 +2,11 @@
 Author: DongEon, Kim
 '''
 
+import torch, argparse, hanja 
 import os, types, pickle, yaml
-import pandas as pd 
-import argparse
-import hanja 
 
-from ast import literal_eval
+import numpy as np 
+import pandas as pd 
 
 from sklearn.model_selection import train_test_split
 
@@ -25,14 +24,21 @@ def load_config(config_file):
     return config
 
 def save_pkl(file, fname):
-    with open(f'./{fname}.pkl', mode='wb') as f:
+    with open(f'{fname}.pkl', mode='wb') as f:
         pickle.dump(file, f)
-    print(f'Success Saving File! PATH: ./{fname}.pkl')
+    print(f'Success Saving File! PATH: {fname}')
 
 def load_pkl(path):
     with open(path, mode='rb') as f:
         file = pickle.load(f)
     return file 
+
+def set_seed(seed=42):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def version_check(names=None):

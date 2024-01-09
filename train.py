@@ -5,7 +5,7 @@ from transformers import AutoModelForSequenceClassification, TrainingArguments, 
 from settings import * 
 
 from utils.preprocessing import preprocess
-from utils.utils import load_pkl, build_unk_tokens, save_pkl
+from utils.utils import load_pkl, build_unk_tokens, save_pkl, set_seed
 from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
@@ -29,7 +29,7 @@ def train(args):
             
         args.tokenizer.add_tokens(unk_list)
 
-    train_set = ReDataset(args,x_train, y_train, types='train')
+    train_set = ReDataset(args, x_train, y_train, types='train')
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
@@ -42,8 +42,9 @@ def train(args):
     train_args = TrainingArguments(
         output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
         save_total_limit=10, 
-        save_steps=1000, 
-        num_train_epochs=20, 
+        save_steps=2000, 
+        num_train_epochs=30,
+        seed=42, 
         learning_rate=args.learning_rate, 
         per_device_train_batch_size=args.batch_size, 
         per_device_eval_batch_size=args.batch_size, 
