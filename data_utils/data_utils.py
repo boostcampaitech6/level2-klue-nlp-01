@@ -9,7 +9,7 @@ from utils.preprocessing import tokenizing
 class ReDataset(Dataset):
     def __init__(self, args:dict, X:pd.DataFrame, y:list, types='train'):
         self.types = types 
-        self.tokenizer = args.tokenizer 
+        # self.tokenizer = args.tokenizer 
         self.datasets = X
         self.labels = y 
 
@@ -31,4 +31,4 @@ class ReDataset(Dataset):
     
 def get_dataloader(args, X, y, types='test'):
     dataset = ReDataset(args, X, y, types=types)
-    return DataLoader(dataset, args.baych_size) # shuffle 추가 가능.
+    return DataLoader(dataset, args.batch_size) # shuffle 추가 가능.
