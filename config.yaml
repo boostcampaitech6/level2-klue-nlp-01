@@ -1,6 +1,6 @@
-model_name: 'klue/roberta-small'
+model_name: 'klue/roberta-large'
 batch_size: 64
-max_epoch: 1
+max_epoch: 20
 learning_rate: '5e-5'
 weight_decay: '0.01'
 num_labels: 30
@@ -10,8 +10,8 @@ dev_path: 'dev-v.0.0.2.csv'
 test_path: 'test_data.csv'
 
 # inference
-model_dir: 'roberta-small/roberta-small-64-5e-05.pt'
+model_dir: 'roberta-small-128-5e-05_raw.pt'
 
 # wandb
 entity: boostcamp-ai-tech-01
-project: #개인이름
+project: kunha98

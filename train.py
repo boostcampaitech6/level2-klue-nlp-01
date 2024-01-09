@@ -36,7 +36,17 @@ def train(args):
     train_set = ReDataset(args,x_train, y_train, types='train')
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
+
+    pretrained_dict = torch.load('/data/ephemeral/roberta-large-pretrained/roberta-large-64-5e-05.pt') # pretrained 상태 로드
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
+    model_dict = model.state_dict() # 현재 신경망 상태 로드
+    # 1. filter out unnecessary keys
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    # 2. overwrite entries in the existing state dict
+    model_dict.update(pretrained_dict) 
+    # 3. load the new state dict
+    model.load_state_dict(model_dict)
+
     model.to(args.device)
     # model.resize_token_embeddings(len(args.tokenizer))
     print(f'Tokenizer Size is {len(args.tokenizer)}')
@@ -81,16 +91,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model_name', required=True, type=str 
+        '--model_name', default='klue/roberta-large', type=str 
     )
     parser.add_argument(
-        '--max_length', '-len', default=256, type=int
+        '--max_length', '-len', default=128, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=32, type=int
+        '--batch_size', '-b', default=64, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
@@ -114,13 +124,13 @@ if __name__ == '__main__':
         '--device', default='cuda:0', type=str
     )
     parser.add_argument(
-        '--wandb', default=False, action='store_true'
+        '--wandb', default=True, action='store_true'
     )
     parser.add_argument(
         '--entity', '-e', default='boostcamp-ai-tech-01', type=str
     )
     parser.add_argument(
-        '--project', default='Level02', type=str
+        '--project', default='kunha98', type=str
     )
     
     
@@ -132,7 +142,6 @@ if __name__ == '__main__':
     args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     
     if args.wandb:
-        wandb.login()
         wandb.init(
             entity=args.entity,
             project= args.project, 

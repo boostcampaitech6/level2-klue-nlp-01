@@ -11,7 +11,7 @@ import argparse
 from tqdm.auto import tqdm 
 
 from utils.utils import num_to_label, load_pkl
-from utils.preprocessing import preprocessing
+from utils.preprocessing import preprocess
 from data_utils.data_utils import get_dataloader
 from settings import * 
 
@@ -36,13 +36,13 @@ def inference(args, model, dataloader):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # model dir
-    parser.add_argument('--model_name', required=True, type=str)
-    parser.add_argument('--save_path', required=True, type=str)
-    parser.add_argument('--batch_size', '-b', default=32)
+    parser.add_argument('--model_name', default='klue/roberta-large', type=str)
+    parser.add_argument('--save_path', default='/data/ephemeral/parameters/roberta-large-64-5e-05.pt', type=str)
+    parser.add_argument('--batch_size', '-b', default=64)
     parser.add_argument('--num_labels', default=30, type=int)
     parser.add_argument('--f_name', default='submission')
-    parser.add_argument('--max_length', default=256)
-    parser.add_argument('--test_path', default='test.csv', type=str)
+    parser.add_argument('--max_length', default=128)
+    parser.add_argument('--test_path', default='test_data.csv', type=str)
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -50,14 +50,14 @@ if __name__ == '__main__':
     args.test_path = os.path.join(DATA_DIR, args.test_path)
 
     # Preprocessing...
-    x_test, y_test = preprocessing(args.test_path)
+    x_test, y_test = preprocess(args.test_path)
     
     # Load Model
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
 
     # Add unk tokens 
-    unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
-    args.tokenizer.add_tokens(unk_list)
+    #unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
+    #args.tokenizer.add_tokens(unk_list)
     model.resize_token_embeddings(len(args.tokenizer))
     
     # Load Model

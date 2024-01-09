@@ -2,8 +2,12 @@ __pycache__/
 .github/
 asset/
 dataset/
+data/
 parameters/
 wandb/
 klue/
 result/
 config.yaml
+BM-K/
+KoSimCSE*
+roberta*
