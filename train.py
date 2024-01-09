@@ -1,37 +1,33 @@
 import argparse 
 import os
 import torch
-from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer, AutoTokenizer 
+from transformers import AutoModelForSequenceClassification, TrainingArguments, AutoTokenizer 
 from settings import * 
 
-from utils.utils import load_data, label_to_num
 from utils.preprocessing import preprocess
-from metrics.metrics import compute_metrics, FocalLoss
+from utils.utils import load_pkl, build_unk_tokens, save_pkl
+from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
-from transformers import Trainer 
+from trainer import CustomTrainer
 
-class CustomTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False):
-        model.cuda()
-        labels = inputs.get('labels')
-        outputs = model(**inputs)
-        logits = outputs.get('logits')
-        loss_fct = FocalLoss(gamma=2)
-        # loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-        loss = loss_fct(logits, labels)
-        return (loss, outputs) if return_outputs else loss 
+
+
 def train(args):
-    # x_train = preprocessing(load_data(args.train_path))
-    # y_train = label_to_num(load_data(args.train_path)['label'])
-    # x_valid = preprocessing(load_data(args.dev_path))
-    # y_valid = label_to_num(load_data(args.dev_path)['label'])
-
-    # x_train = preprocessing(load_data(args.train_path))
-    # x_valid = preprocessing(load_data(args.dev_path))
     x_train, y_train = preprocess(args.train_path)
     x_valid, y_valid = preprocess(args.dev_path)
-    
+    x_test, _ = preprocess(args.test_path)
+    if args.unk_token:
+        if not os.path.exists(os.path.join(DATA_DIR, 'unk_tokens.pkl')):
+            unk_list = []
+            for data in [x_train, x_valid, x_test]:
+                unk = build_unk_tokens(data, args.tokenizer, verbose=args.verbose)
+                unk_list.extend(unk)
+            save_pkl(unk_list, os.path.join(DATA_DIR, 'unk_tokens.pkl'))
+        else:
+            unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
+            
+        args.tokenizer.add_tokens(unk_list)
 
     train_set = ReDataset(args,x_train, y_train, types='train')
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
@@ -48,12 +44,14 @@ def train(args):
     model.load_state_dict(model_dict)
 
     model.to(args.device)
-    # model.resize_token_embeddings(len(args.tokenizer))
+
+    
+    model.resize_token_embeddings(len(args.tokenizer))
     print(f'Tokenizer Size is {len(args.tokenizer)}')
     
     train_args = TrainingArguments(
         output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
-        save_total_limit=5, 
+        save_total_limit=10, 
         save_steps=1000, 
         num_train_epochs=20, 
         learning_rate=args.learning_rate, 
@@ -65,17 +63,14 @@ def train(args):
         logging_steps=100, 
         evaluation_strategy='steps', 
         eval_steps=500, 
-        load_best_model_at_end=True 
+        load_best_model_at_end=True, 
+        metric_for_best_model='micro f1 score', 
+        greater_is_better=True
     )
-
-    # class CustomTrainer(Trainer):
-    # def compute_loss(self, model, inputs, return_outputs=False):
-    #     labels = inputs.get('labels')
-    #     outputs = model(**inputs)
-    #     logits = outputs.get('logits')
-    #     loss_fct = FocalLoss(gamma=2)
-    #     loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-    #     return (loss, outputs) if return_outputs else loss 
+    
+    train_args.focal_loss = args.focal_loss
+    train_args.gamma = args.gamma 
+    
     trainer = CustomTrainer(
         model=model, 
         args=train_args, 
@@ -83,6 +78,7 @@ def train(args):
         eval_dataset=dev_set, 
         compute_metrics=compute_metrics
     )
+    
     trainer.train()
     torch.save(model.state_dict(), os.path.join(PARAM_DIR, f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
     
@@ -90,9 +86,13 @@ def train(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    
+    # model name 
     parser.add_argument(
         '--model_name', default='klue/roberta-large', type=str 
     )
+    
+    # hyper-parameters 
     parser.add_argument(
         '--max_length', '-len', default=128, type=int
     )
@@ -112,17 +112,21 @@ if __name__ == '__main__':
         '--gamma', '-g', default=2., type=float
     )
     parser.add_argument(
+        '--device', default='cuda:0', type=str
+    )
+    
+    # path 
+    parser.add_argument(
         '--train_path', default='train-v.0.0.2.csv', type=str
     )
     parser.add_argument(
         '--dev_path', default='dev-v.0.0.2.csv', type=str
     )
     parser.add_argument(
-        '--test_path', default='test_data.csv', type=str
+        '--test_path', default='test.csv', type=str
     )
-    parser.add_argument(
-        '--device', default='cuda:0', type=str
-    )
+
+    # wandb
     parser.add_argument(
         '--wandb', default=True, action='store_true'
     )
@@ -131,6 +135,19 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--project', default='kunha98', type=str
+    )
+    
+    # focal loss 
+    parser.add_argument(
+        '--focal_loss', action='store_true'
+    )
+    
+    # Add unk token
+    parser.add_argument(
+        '--unk_token', action='store_true'
+    )
+    parser.add_argument(
+        '--verbose', action='store_true'
     )
     
     

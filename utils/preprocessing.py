@@ -1,19 +1,19 @@
 from tqdm.auto import tqdm 
 from ast import literal_eval
-from utils.utils import load_data, label_to_num
+from utils.utils import load_data, label_to_num, hanja_to_hangul
 import re 
-from transformers import AutoTokenizer
 """
 작성자: 김인수, 이재형
 """
 
 ############################### Preprocessing ###############################
-def preprocess(path, marker_type = 'temp'):
+def preprocess(path, marker_type = 'temp', translate = True):
     """_summary_
 
     Args:
         path (str): data path
         marker_type (str, optional): marker type sellection. Defaults to 'temp'.
+        translate (bool, optional): translate hanja to hangul. Defaults to True.
 
     Returns:
         X, y: 'sentence', 'subject_entity', 'object_entity' column Data, label column data
@@ -22,33 +22,43 @@ def preprocess(path, marker_type = 'temp'):
     X_col, y_col = ['sentence', 'subject_entity', 'object_entity'], 'label'
     for idx, row in tqdm(datasets.iterrows(), total = datasets.shape[0], desc = "Dataset Preprocessing..."):
         sen, sbj, obj = row['sentence'], literal_eval(row['subject_entity']), literal_eval(row['object_entity'])
+        if translate:
+            sen = hanja_to_hangul(sen)
         sen = re.sub('\*','', sen)
 
-        sbj_word, obj_word = get_marker_tag(sen, sbj, obj, marker_type)
+        sbj_word, obj_word = get_marker_tag(sbj, obj, marker_type, translate)
         sen = replace_string_index(sen, sbj, obj, sbj_word, obj_word)
 
         # marker_type에 따라 변형된 Sentence
-        datasets.iloc[idx, 1] = sen
+        datasets.at[idx, 'sentence'] = sen
+        if translate:
+            sbj['word'] = hanja_to_hangul(sbj['word'])
+            obj['word'] = hanja_to_hangul(obj['word'])
+            datasets.at[idx, 'subject_entity'] = sbj 
+            datasets.at[idx, 'object_entity'] = obj
 
     X = datasets.loc[:, X_col].copy()
-    y = label_to_num(datasets.loc[:, y_col].values)
+    try:
+        y = label_to_num(datasets.loc[:, y_col].values)
+    except:
+        y = [100] * X.shape[0]
     return X, y
 
 def tokenizing(args:dict, datasets, marker_type = 'temp'):
     """_summary_
 
     Args:
-        args (dict): model_name, max_length
+        args (dict): max_length
         datasets (pd.Dataframe): 'sentence', 'subject_entity', 'object_entity' columns Dataframe
         marker_type (str, optional): Defaults to 'temp'.
 
     Returns:
         tokenized_sentences: tokenized_sentences
     """    
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    
     concat_entity = []
     for idx, row in tqdm(datasets.iterrows(), total = datasets.shape[0], desc = "Dataset Tokenizing..."):
-        sbj, obj = literal_eval(row['subject_entity']), literal_eval(row['object_entity'])
+        sbj, obj = row['subject_entity'], row['object_entity']
         sbj_word, sbj_type = sbj['word'], sbj['type']
         obj_word, obj_type = obj['word'], obj['type']
 
@@ -59,7 +69,7 @@ def tokenizing(args:dict, datasets, marker_type = 'temp'):
         temp = relation + '[SEP]' + row['sentence']
         concat_entity.append(temp)
         
-    tokenized_sentences = tokenizer(
+    tokenized_sentences = args.tokenizer(
         concat_entity, 
         return_tensors='pt', 
         padding=True, 
@@ -70,8 +80,7 @@ def tokenizing(args:dict, datasets, marker_type = 'temp'):
     return tokenized_sentences
 ############################### Preprocessing ###############################
 
-
-def get_marker_tag(sen: str, sbj:dict, obj:dict, method:str = 'temp') -> (str, str):
+def get_marker_tag(sbj:dict, obj:dict, method:str = 'temp', translate:bool = True) -> (str, str):
     """_summary_
 
     Args:
@@ -133,4 +142,3 @@ def replace_string_index(sen:str, sbj:dict, obj:dict, sbj_word:str, obj_word:str
         return sen[:sbj_start_idx] + sbj_word + sen[sbj_end_idx+1:obj_start_idx] + obj_word + sen[obj_end_idx+1:]
     else:
         return sen[:obj_start_idx] + obj_word + sen[obj_end_idx+1:sbj_start_idx] + sbj_word + sen[sbj_end_idx+1:]
-

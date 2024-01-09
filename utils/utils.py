@@ -5,6 +5,9 @@ Author: DongEon, Kim
 import os, types, pickle, yaml
 import pandas as pd 
 import argparse
+import hanja 
+
+from ast import literal_eval
 
 from sklearn.model_selection import train_test_split
 
@@ -44,6 +47,38 @@ def version_check(names=None):
             exec('print(f"{name.__name__} version is {name.__version__}")')
     else:
         raise ValueError
+
+def hanja_to_hangul(sentence):
+    return hanja.translate(sentence, 'substitution')
+
+
+def get_unk_tokens(entity, tokenizer, unk_token_ids=3, verbose=True):
+    unk_list = []
+    token_ids = tokenizer.encode(entity)
+    decode_entity = tokenizer.decode(token_ids)[5:-5]
+    if unk_token_ids in token_ids:
+        for src, dst in zip(entity.split(), decode_entity.split()):
+            if verbose:
+                if src != dst and dst == '[UNK]':
+                    print(f'Entity: {entity}')
+                    print(f'[UNK] Tokens: {decode_entity}')
+                    print(f'{dst} = {src}\n')
+                    unk_list.append(src)
+    return unk_list 
+
+def build_unk_tokens(dataset, tokenizer, unk_token_ids=3, verbose=True):
+    unk_list = []
+    for _, rows in dataset.iterrows():
+        sbj, obj = rows['subject_entity']['word'], rows['object_entity']['word']
+        sbj_unk = get_unk_tokens(sbj, tokenizer, unk_token_ids, verbose)
+        obj_unk = get_unk_tokens(obj, tokenizer, unk_token_ids, verbose)
+        
+        if sbj_unk != []:
+            unk_list.extend(sbj_unk)
+        
+        if obj_unk != []:
+            unk_list.extend(obj_unk)
+    return unk_list 
 
 
 def label_to_num(label):

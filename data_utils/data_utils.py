@@ -9,7 +9,6 @@ from utils.preprocessing import tokenizing
 class ReDataset(Dataset):
     def __init__(self, args:dict, X:pd.DataFrame, y:list, types='train'):
         self.types = types 
-        # self.tokenizer = args.tokenizer 
         self.datasets = X
         self.labels = y 
 
