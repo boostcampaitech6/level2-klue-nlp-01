@@ -83,18 +83,18 @@ if __name__ == '__main__':
     
     # model name 
     parser.add_argument(
-        '--model_name', default='klue/roberta-large', type=str 
+        '--model_name', required=True, type=str 
     )
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=128, type=int
+        '--max_length', '-len', default=256, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=64, type=int
+        '--batch_size', '-b', default=32, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
@@ -117,7 +117,7 @@ if __name__ == '__main__':
         '--dev_path', default='dev-v.0.0.2.csv', type=str
     )
     parser.add_argument(
-        '--test_path', default='test_data.csv', type=str
+        '--test_path', default='test.csv', type=str
     )
 
     # wandb
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         '--entity', '-e', default='boostcamp-ai-tech-01', type=str
     )
     parser.add_argument(
-        '--project', default='kunha98', type=str
+        '--project', default='Level02', type=str
     )
     
     # focal loss 
