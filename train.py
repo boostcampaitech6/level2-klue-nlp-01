@@ -5,7 +5,7 @@ from transformers import AutoModelForSequenceClassification, TrainingArguments, 
 from settings import * 
 
 from utils.preprocessing import preprocess
-from utils.utils import load_pkl, build_unk_tokens, save_pkl, set_seed
+from utils.utils import load_pkl, build_unk_tokens, save_pkl, set_seed, tapt_apply
 from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
@@ -33,6 +33,9 @@ def train(args):
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
+    # Tapt
+    if args.tapt:
+        model = tapt_apply(torch.load(args.tapt_pretrained_path), model)
     model.to(args.device)
 
     
@@ -119,7 +122,7 @@ if __name__ == '__main__':
 
     # wandb
     parser.add_argument(
-        '--wandb', default=False, action='store_true'
+        '--wandb', default=True, action='store_true'
     )
     parser.add_argument(
         '--entity', '-e', default='boostcamp-ai-tech-01', type=str
@@ -141,16 +144,26 @@ if __name__ == '__main__':
         '--verbose', action='store_true'
     )
     
+    # Apply Tapt
+    parser.add_argument(
+        '--tapt', default=False, action='store_true'
+    )
+    parser.add_argument(
+        '--tapt_pretrained_path', '-pre_path', default='Tapt-roberta-large-pretrained.pt', action='store_true'
+    )
+
+
     
     args = parser.parse_args()
     args.train_path = os.path.join(DATA_DIR, args.train_path)
     args.dev_path = os.path.join(DATA_DIR, args.dev_path)
     args.test_path = os.path.join(DATA_DIR, args.test_path)
-    
+
+    args.tapt_pretrained_path = os.path.join(PARAM_DIR,args.tapt_pretrained_path)
+
     args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     
     if args.wandb:
-        wandb.login()
         wandb.init(
             entity=args.entity,
             project= args.project, 
