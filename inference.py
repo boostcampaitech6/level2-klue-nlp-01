@@ -2,6 +2,9 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import pandas as pd
 import torch
 import os 
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import torch.nn.functional as F
 
@@ -38,19 +41,23 @@ if __name__ == '__main__':
     # model dir
     parser.add_argument('--model_name', required=True, type=str)
     parser.add_argument('--save_path', required=True, type=str)
+    parser.add_argument('--inference', required=True, type=str) # test or dev
     parser.add_argument('--batch_size', '-b', default=32)
     parser.add_argument('--num_labels', default=30, type=int)
     parser.add_argument('--f_name', default='submission')
     parser.add_argument('--max_length', default=256)
     parser.add_argument('--test_path', default='test.csv', type=str)
+    parser.add_argument('--dev_path', default='dev-v.0.0.2.csv', type=str)
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-    args.test_path = os.path.join(DATA_DIR, args.test_path)
 
     # Preprocessing...
-    x_test, y_test = preprocess(args.test_path)
+    if args.inference == 'test':
+      x_test, y_test = preprocess(os.path.join(DATA_DIR, args.test_path))
+    elif args.inference == 'dev':
+      x_test, y_test = preprocess(os.path.join(DATA_DIR, args.dev_path))
     
     # Get DataLoader 
     test_loader = get_dataloader(args, x_test, y_test, types='test')    
@@ -71,7 +78,36 @@ if __name__ == '__main__':
     pred_answer, output_prob = inference(args, model, test_loader)
     pred_answer = num_to_label(pred_answer)
     
-    # Submission
-    output = pd.DataFrame({'id':list(range(len(pred_answer))),'pred_label':pred_answer,'probs':output_prob,})
-    output.to_csv(os.path.join(OUT_DIR, f'{args.f_name}.csv'))
+    if args.inference == 'dev':
+        label_list = ["no_relation", "org:dissolved", "org:founded", "org:place_of_headquarters", 
+                "org:alternate_names", "org:member_of", "org:members","org:political/religious_affiliation", 
+                "org:product", "org:founded_by","org:top_members/employees", "org:number_of_employees/members", 
+                "per:date_of_birth", "per:date_of_death", "per:place_of_birth", "per:place_of_death", 
+                "per:place_of_residence", "per:origin","per:employee_of", "per:schools_attended", "per:alternate_names", 
+                "per:parents", "per:children", "per:siblings", "per:spouse", "per:other_family", "per:colleagues", 
+                "per:product", "per:religion", "per:title"]
+  
+        y_test = num_to_label(y_test)
+        cm = confusion_matrix(y_test, pred_answer)
+        
+  
+        plt.figure(figsize=(18, 18))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                    xticklabels=label_list, yticklabels=label_list,
+                    square=False) 
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.title('Confusion Matrix')
+        
+        plt.tight_layout()
+        plt.savefig('confusion_matrix.jpg', dpi=300, pad_inches=0.5)
+        
+    elif args.inference == 'test':
+        # Submission
+        output = pd.DataFrame({'id':list(range(len(pred_answer))),'pred_label':pred_answer,'probs':output_prob,})
+        output.to_csv(os.path.join(OUT_DIR, f'{args.f_name}.csv'))
+        
     print('Success!')
+    
+    
+    #### python inference.py --model_name  --save_path  --inference dev (test시에는 test로 작성하시면 됩니다.)
