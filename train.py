@@ -41,8 +41,8 @@ def train(args):
     
     train_args = TrainingArguments(
         output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
-        save_total_limit=10, 
-        save_steps=2000, 
+        save_total_limit=5, 
+        save_steps=500, 
         num_train_epochs=30,
         seed=42, 
         learning_rate=args.learning_rate, 

@@ -52,6 +52,9 @@ if __name__ == '__main__':
     # Preprocessing...
     x_test, y_test = preprocess(args.test_path)
     
+    # Get DataLoader 
+    test_loader = get_dataloader(args, x_test, y_test, types='test')    
+    
     # Load Model
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
 
@@ -63,9 +66,6 @@ if __name__ == '__main__':
     # Load Model
     model.load_state_dict(torch.load(os.path.join(BASE_DIR, args.save_path)))
     
-    # Get DataLoader 
-    test_loader = get_dataloader(args, x_test, y_test, types='test')
-
     # Inference  
     model.to(args.device)
     pred_answer, output_prob = inference(args, model, test_loader)
