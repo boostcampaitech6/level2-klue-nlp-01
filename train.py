@@ -5,7 +5,7 @@ from transformers import AutoModelForSequenceClassification, TrainingArguments, 
 from settings import * 
 
 from utils.preprocessing import preprocess
-from utils.utils import load_pkl, build_unk_tokens, save_pkl, set_seed
+from utils.utils import load_pkl, build_unk_tokens, save_pkl, set_seed, tapt_apply
 from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
@@ -33,27 +33,9 @@ def train(args):
     dev_set = ReDataset(args, x_valid, y_valid, types='dev')
     
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
-
-    # TAPT
-    pretrained_dict = torch.load('/data/ephemeral/roberta-large-pretrained/roberta-large-64-5e-05.pt') # pretrained 상태 로드
-    model_dict = model.state_dict() # 현재 신경망 상태 로드
-    # 1. filter out unnecessary keys
-    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-    # 2. overwrite entries in the existing state dict
-    model_dict.update(pretrained_dict) 
-    # 3. load the new state dict
-    model.load_state_dict(model_dict)
-    """
-    #HEAD만
-    for name, param in model.named_parameters():
-        if name.split('.')[0] == 'classifier':
-            pass
-        else :
-            param.requires_grad = False
-    for name, param in model.named_parameters():
-        print(name, param.requires_grad)
-    """
-
+    # Tapt
+    if args.tapt:
+        model = tapt_apply(torch.load(args.tapt_pretrained_path), model)
     model.to(args.device)
 
     
@@ -77,8 +59,7 @@ def train(args):
         eval_steps=500, 
         load_best_model_at_end=True, 
         metric_for_best_model='micro f1 score', 
-        greater_is_better=True,
-        seed=42
+        greater_is_better=True
     )
     
     train_args.focal_loss = args.focal_loss
@@ -163,12 +144,23 @@ if __name__ == '__main__':
         '--verbose', action='store_true'
     )
     
+    # Apply Tapt
+    parser.add_argument(
+        '--tapt', default=False, action='store_true'
+    )
+    parser.add_argument(
+        '--tapt_pretrained_path', '-pre_path', default='Tapt-roberta-large-pretrained.pt', action='store_true'
+    )
+
+
     
     args = parser.parse_args()
     args.train_path = os.path.join(DATA_DIR, args.train_path)
     args.dev_path = os.path.join(DATA_DIR, args.dev_path)
     args.test_path = os.path.join(DATA_DIR, args.test_path)
-    
+
+    args.tapt_pretrained_path = os.path.join(PARAM_DIR,args.tapt_pretrained_path)
+
     args.tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     
     if args.wandb:
