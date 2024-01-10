@@ -35,7 +35,7 @@ def train(args):
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
 
     # TAPT
-    pretrained_dict = torch.load('/data/ephemeral/roberta-small-pretrained/roberta-small-128-5e-05.pt') # pretrained 상태 로드
+    pretrained_dict = torch.load('/data/ephemeral/roberta-large-pretrained/roberta-large-64-5e-05.pt') # pretrained 상태 로드
     model_dict = model.state_dict() # 현재 신경망 상태 로드
     # 1. filter out unnecessary keys
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
@@ -101,18 +101,18 @@ if __name__ == '__main__':
     
     # model name 
     parser.add_argument(
-        '--model_name', default='klue/roberta-small', type=str 
+        '--model_name', default='klue/roberta-large', type=str 
     )
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=256, type=int
+        '--max_length', '-len', default=128, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=128, type=int
+        '--batch_size', '-b', default=64, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
