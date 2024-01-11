@@ -39,17 +39,15 @@ def inference(args, model, dataloader):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # model dir
-<<<<<<< HEAD
     parser.add_argument('--model_name', default='klue/roberta-large', type=str)
     parser.add_argument('--save_path', default='/data/ephemeral/parameters/roberta-large-64-5e-05_tapt.pt', type=str)
     parser.add_argument('--inference', required=True, type=str) # test or dev
-    parser.add_argument('--batch_size', '-b', default=128)
+    parser.add_argument('--batch_size', '-b', default=64)
     parser.add_argument('--num_labels', default=30, type=int)
     parser.add_argument('--f_name', default='submission')
     parser.add_argument('--max_length', default=128)
     parser.add_argument('--test_path', default='test_data.csv', type=str)
     parser.add_argument('--dev_path', default='dev-v.0.0.2.csv', type=str)
->>>>>>> e51595cdf5095e9b377cbc806a92fd9568e19adb
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 

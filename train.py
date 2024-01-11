@@ -62,7 +62,7 @@ def train(args):
         greater_is_better=True
     )
     
-    train_args.focal_loss = args.focal_loss
+    train_args.loss_type = args.loss_type
     train_args.gamma = args.gamma 
     
     trainer = CustomTrainer(
@@ -131,9 +131,10 @@ if __name__ == '__main__':
         '--project', default='Level02', type=str
     )
     
-    # focal loss 
+    # loss 
+    # select between focal, ldam, labsm (else) cross entropy
     parser.add_argument(
-        '--focal_loss', action='store_true'
+        '--loss_type', '-lt', required=True, type=str
     )
     
     # Add unk token
