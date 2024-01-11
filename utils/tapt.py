@@ -1,7 +1,9 @@
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import torch
 from transformers import AutoTokenizer, DataCollatorForLanguageModeling, AutoModelForMaskedLM, get_linear_schedule_with_warmup, LineByLineTextDataset, Trainer, TrainingArguments, EarlyStoppingCallback 
 import wandb
-import os
 import argparse
 from settings import * 
 
