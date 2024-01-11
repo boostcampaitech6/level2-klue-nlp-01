@@ -16,7 +16,7 @@ def train_tapt(args):
     # Read txt file which is consisted of sentences from train.csv
     dataset = LineByLineTextDataset(
         tokenizer=tokenizer,
-        file_path=os.path.join(DATA_DIR, 'merged.txt'),
+        file_path=os.path.join(DATA_DIR, 'merged-kde.txt'),
         block_size=128 # block size needs to be modified to max_position_embeddings
     )
 
@@ -26,10 +26,10 @@ def train_tapt(args):
 
     # need to change arguments 
     training_args = TrainingArguments(
-        overwrite_output_dir=True,
-        learning_rate=5e-05,
+        output_dir=f'{args.model_name}-{args.batch_size}-{args.learning_rate}',
+        learning_rate=args.learning_rate,
         num_train_epochs=100, 
-        per_device_train_batch_size=64,
+        per_device_train_batch_size=args.batch_size,
         save_steps=100,
         save_total_limit=2,
         seed=0,
@@ -38,7 +38,7 @@ def train_tapt(args):
         logging_steps=100,
         evaluation_strategy='epoch',
         resume_from_checkpoint=True,
-        fp16=False,
+        fp16=True,
         fp16_opt_level='O1',
         load_best_model_at_end=True,
 
@@ -73,6 +73,12 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--device', default='cuda:0', type=str
+    )
+    parser.add_argument(
+        '--batch_size', default=64, type=int
+    )
+    parser.add_argument(
+        '--learning_rate', default=5e-5, type=float
     )
 
     # wandb
