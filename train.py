@@ -88,13 +88,13 @@ if __name__ == '__main__':
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=256, type=int
+        '--max_length', '-len', default=128, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=32, type=int
+        '--batch_size', '-b', default=64, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
