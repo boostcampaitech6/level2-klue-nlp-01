@@ -20,14 +20,6 @@ class FocalLoss(nn.Module):
             weight=self.weight,
             reduction=self.reduction
         )
-    # def forward(self, input, target):
-    #     target = target.view(-1,1)
-
-    #     log_prob = F.log_softmax(input, dim=-1)
-    #     prob = log_prob.exp()
-    #     loss = -1 * (1-prob)**self.gamma * log_prob
-    #     if self.size_average: return loss.mean()
-    #     else: return loss.sum()
 
 class LDAMLoss(nn.Module):
     def __init__(self, cls_num_list, max_m=0.5, weight=None, s=30):
