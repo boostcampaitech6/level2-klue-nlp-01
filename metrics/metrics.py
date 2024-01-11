@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F 
 from sklearn.metrics import precision_recall_curve, auc, f1_score, accuracy_score
 import torch
+
+
 class FocalLoss(nn.Module):
     def __init__(self, weight=None, gamma=0.5, reduction='mean'):
         super(FocalLoss, self).__init__()
@@ -26,6 +28,61 @@ class FocalLoss(nn.Module):
     #     loss = -1 * (1-prob)**self.gamma * log_prob
     #     if self.size_average: return loss.mean()
     #     else: return loss.sum()
+
+class LDAMLoss(nn.Module):
+    def __init__(self, cls_num_list, max_m=0.5, weight=None, s=30):
+        """class to calculate Label-Distribution-Aware Margin Loss
+
+        Args:
+            cls_num_list (_type_): _description_
+            max_m (float, optional): _description_. Defaults to 0.5.
+            weight (_type_, optional): _description_. Defaults to None.
+            s (int, optional): _description_. Defaults to 30.
+        """
+        super().__init__()
+        m_list = 1.0 / (torch.sqrt(torch.sqrt(cls_num_list))+ 1e-7)
+        m_list = m_list * (max_m / torch.max(m_list))
+        m_list = torch.cuda.FloatTensor(m_list)
+        self.m_list = m_list
+        assert s > 0
+        self.s = s
+        self.weight = weight
+
+    def forward(self, x, target):
+        index = torch.zeros_like(x, dtype=torch.bool)
+        index.scatter_(1, target.data.view(-1, 1), 1)
+
+        index_float = index.type(torch.cuda.FloatTensor)
+        batch_m = torch.matmul(self.m_list[None, :], index_float.transpose(0, 1))
+        batch_m = batch_m.view((-1, 1))
+        x_m = x - batch_m
+
+        output = torch.where(index, x_m, x)
+        return F.cross_entropy(self.s * output, target, weight=self.weight)
+
+
+class LabelSmoothingLoss(nn.Module):
+    def __init__(self, classes=30, smoothing=0.05, dim=-1):
+        """class to calculate label smoothing loss
+
+        Args:
+            classes (int, optional): Defaults to 30.
+            smoothing (float, optional): highly recommend to use between 0~0.1
+            dim (int, optional): Defaults to -1.
+        """
+        super(LabelSmoothingLoss, self).__init__()
+        self.confidence = 1.0 - smoothing
+        self.smoothing = smoothing
+        self.cls = classes
+        self.dim = dim
+    def forward(self, pred, target):
+        pred = pred.log_softmax(dim=self.dim)
+        with torch.no_grad():
+            true_dist = torch.zeros_like(pred)
+            true_dist.fill_(self.smoothing / (self.cls - 1))
+            true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
+        return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))
+
 
 
 def klue_re_micro_f1(preds, labels):

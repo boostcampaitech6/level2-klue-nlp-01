@@ -1,5 +1,5 @@
 from transformers import Trainer 
-from metrics.metrics import FocalLoss
+from metrics.metrics import FocalLoss, LDAMLoss, LabelSmoothingLoss
 import torch.nn.functional as F
 from torchsampler import ImbalancedDatasetSampler
 from torch.utils.data import DataLoader 
@@ -10,13 +10,18 @@ class CustomTrainer(Trainer):
         outputs = model(**inputs)
         logits = outputs.get('logits')
         
-        if self.args.focal_loss:
+        if self.args.loss_type=='focal':
             loss_fct = FocalLoss()
             loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-            return (loss, outputs) if return_outputs else loss
+        elif self.args.loss_type=='ldam':
+            loss_fct = LDAMLoss()
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        elif self.args.loss_type=='labsm':
+            loss_fct = LabelSmoothingLoss()
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
         else:
             loss = F.cross_entropy(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-            return (loss, outputs) if return_outputs else loss
+        return (loss, outputs) if return_outputs else loss
         
 class ImbalancedSamplerTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
@@ -24,10 +29,21 @@ class ImbalancedSamplerTrainer(Trainer):
         labels = inputs.get('labels')
         outputs = model(**inputs)
         logits = outputs.get('logits')
-        loss_fct = FocalLoss(gamma=2)
-        loss = loss_fct(logits, labels)
+
+        if self.args.loss_type=='focal':
+            loss_fct = FocalLoss(gamma=2)
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        elif self.args.loss_type=='ldam':
+            loss_fct = LDAMLoss()
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        elif self.args.loss_type=='labsm':
+            loss_fct = LabelSmoothingLoss()
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        else:
+            loss = F.cross_entropy(logits.view(-1, self.model.config.num_labels), labels.view(-1))
         return (loss, outputs) if return_outputs else loss
     
+
     def get_train_dataloader(self) -> DataLoader:
         train_dataset = self.train_dataset
 
