@@ -3,18 +3,22 @@ from metrics.metrics import FocalLoss, LDAMLoss, LabelSmoothingLoss
 import torch.nn.functional as F
 from torchsampler import ImbalancedDatasetSampler
 from torch.utils.data import DataLoader 
+import torch
 
 class CustomTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         labels = inputs.get('labels')
         outputs = model(**inputs)
         logits = outputs.get('logits')
+
+        cls_num_list = torch.bincount(labels)
+        cls_num_list = torch.cat((cls_num_list,torch.zeros(30-cls_num_list.shape[0], device='cuda')),axis=0)
         
         if self.args.loss_type=='focal':
             loss_fct = FocalLoss()
             loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
         elif self.args.loss_type=='ldam':
-            loss_fct = LDAMLoss()
+            loss_fct = LDAMLoss(cls_num_list)
             loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
         elif self.args.loss_type=='labsm':
             loss_fct = LabelSmoothingLoss()
