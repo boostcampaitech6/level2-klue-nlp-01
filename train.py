@@ -23,7 +23,7 @@ def train(args):
             for data in [x_train, x_valid, x_test]:
                 unk = build_unk_tokens(data, args.tokenizer, verbose=args.verbose)
                 unk_list.extend(unk)
-            save_pkl(unk_list, os.path.join(DATA_DIR, 'unk_tokens.pkl'))
+            save_pkl(unk_list, os.path.join(DATA_DIR, 'unk_tokens'))
         else:
             unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
             
@@ -46,12 +46,13 @@ def train(args):
         output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
         save_total_limit=5, 
         save_steps=500, 
-        num_train_epochs=30,
+        num_train_epochs=8,
         seed=42, 
         learning_rate=args.learning_rate, 
         per_device_train_batch_size=args.batch_size, 
         per_device_eval_batch_size=args.batch_size, 
-        warmup_steps=500, 
+        #warmup_steps=500,
+        warmup_ratio=0.1, 
         weight_decay=args.weight_decay, 
         logging_dir = './logs', 
         logging_steps=100, 
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=128, type=int
+        '--max_length', '-len', default=160, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         '--weight_decay', '-wd', default=0.01, type=float
     )
     parser.add_argument(
-        '--learning_rate', '-lr', default=5e-5, type=float
+        '--learning_rate', '-lr', default=3e-5, type=float
     )
     parser.add_argument(
         '--gamma', '-g', default=2., type=float
@@ -117,7 +118,7 @@ if __name__ == '__main__':
         '--dev_path', default='dev-v.0.0.2.csv', type=str
     )
     parser.add_argument(
-        '--test_path', default='test.csv', type=str
+        '--test_path', default='test_data.csv', type=str
     )
 
     # wandb
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         '--entity', '-e', default='boostcamp-ai-tech-01', type=str
     )
     parser.add_argument(
-        '--project', default='Level02', type=str
+        '--project', default='kunha98', type=str
     )
     
     # loss 
@@ -147,10 +148,10 @@ if __name__ == '__main__':
     
     # Apply Tapt
     parser.add_argument(
-        '--tapt', default=False, action='store_true'
+        '--tapt', default=True, action='store_true'
     )
     parser.add_argument(
-        '--tapt_pretrained_path', '-pre_path', default='Tapt-roberta-large-pretrained.pt', action='store_true'
+        '--tapt_pretrained_path', '-pre_path', default='tapt-roberta-large-pretrained_0109.pt', action='store_true'
     )
 
 

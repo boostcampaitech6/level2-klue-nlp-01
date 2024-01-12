@@ -185,7 +185,7 @@ if __name__ == '__main__':
         '--version', '-V', default='v.0.0.2',type=str 
     )
     parser.add_argument(
-        '--train_path', default='train.csv', type=str
+        '--train_path', default='train/train.csv', type=str
     )
     
     args = parser.parse_args()

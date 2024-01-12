@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--f_name', default='submission')
     parser.add_argument('--max_length', default=128)
     parser.add_argument('--test_path', default='test_data.csv', type=str)
-    parser.add_argument('--dev_path', default='dev-v.0.0.2.csv', type=str)
+    parser.add_argument('--dev_path', default='klue-re-v1.1_dev.csv', type=str)
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
   
         y_test = num_to_label(y_test)
         cm = confusion_matrix(y_test, pred_answer)
-        
+        print(cm)
   
         plt.figure(figsize=(18, 18))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
