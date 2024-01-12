@@ -10,6 +10,8 @@ from metrics.metrics import compute_metrics
 from data_utils.data_utils import ReDataset 
 import wandb
 from trainer import CustomTrainer
+from timm.optim import AdamP
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
 
@@ -43,10 +45,10 @@ def train(args):
     print(f'Tokenizer Size is {len(args.tokenizer)}')
     
     train_args = TrainingArguments(
-        output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}', 
+        output_dir = f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}-{args.loss_type}-tapt={args.tapt}', 
         save_total_limit=5, 
         save_steps=500, 
-        num_train_epochs=8,
+        num_train_epochs=args.num_epochs,
         seed=42, 
         learning_rate=args.learning_rate, 
         per_device_train_batch_size=args.batch_size, 
@@ -60,22 +62,28 @@ def train(args):
         eval_steps=500, 
         load_best_model_at_end=True, 
         metric_for_best_model='micro f1 score', 
-        greater_is_better=True
+        greater_is_better=True, 
+        
     )
     
     train_args.loss_type = args.loss_type
     train_args.gamma = args.gamma 
+    
+    # optimizer
+    optimizer = AdamP(model.parameters(), lr=args.learning_rate, eps=1e-8, weight_decay=0.01)
+    lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=0)
     
     trainer = CustomTrainer(
         model=model, 
         args=train_args, 
         train_dataset=train_set, 
         eval_dataset=dev_set, 
-        compute_metrics=compute_metrics
+        compute_metrics=compute_metrics, 
+        optimizers=(optimizer, lr_scheduler)
     )
     
     trainer.train()
-    torch.save(model.state_dict(), os.path.join(PARAM_DIR, f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}.pt'))
+    torch.save(model.state_dict(), os.path.join(PARAM_DIR, f'{args.model_name.split("/")[-1]}-{args.batch_size}-{args.learning_rate}-{args.loss_type}-tapt={args.tapt}.pt'))
     
 
 if __name__ == '__main__':
@@ -89,10 +97,13 @@ if __name__ == '__main__':
     
     # hyper-parameters 
     parser.add_argument(
-        '--max_length', '-len', default=160, type=int
+        '--max_length', '-len', default=256, type=int
     )
     parser.add_argument(
         '--num_labels', '-l', default=30, type=int
+    )
+    parser.add_argument(
+        '--num_epochs', default=8, type=int
     )
     parser.add_argument(
         '--batch_size', '-b', default=64, type=int
@@ -133,14 +144,14 @@ if __name__ == '__main__':
     )
     
     # loss 
-    # select between focal, ldam, labsm (else) cross entropy
+    # select between focal, ldam, labsm (else) cross entry
     parser.add_argument(
         '--loss_type', '-lt', required=True, type=str
     )
     
     # Add unk token
     parser.add_argument(
-        '--unk_token', action='store_true'
+        '--unk_token', default=True, action='store_true'
     )
     parser.add_argument(
         '--verbose', action='store_true'
@@ -169,7 +180,7 @@ if __name__ == '__main__':
         wandb.init(
             entity=args.entity,
             project= args.project, 
-            name=f'{args.model_name}-{args.batch_size}-{args.learning_rate}',
+            name=f'{args.model_name}-{args.batch_size}-{args.learning_rate}-{args.loss_type}-tapt={args.tapt}',
             config= {
                 'learning_rate': args.learning_rate, 
                 'batch_size': args.batch_size, 

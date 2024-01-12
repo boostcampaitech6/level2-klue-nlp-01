@@ -40,14 +40,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # model dir
     parser.add_argument('--model_name', default='klue/roberta-large', type=str)
-    parser.add_argument('--save_path', default='/data/ephemeral/parameters/roberta-large-64-5e-05_tapt.pt', type=str)
+    parser.add_argument('--save_path', required=True, type=str)
     parser.add_argument('--inference', required=True, type=str) # test or dev
-    parser.add_argument('--batch_size', '-b', default=64)
+    parser.add_argument('--batch_size', '-b', default=32)
     parser.add_argument('--num_labels', default=30, type=int)
     parser.add_argument('--f_name', default='submission')
-    parser.add_argument('--max_length', default=128)
+    parser.add_argument('--max_length', default=256)
     parser.add_argument('--test_path', default='test_data.csv', type=str)
-    parser.add_argument('--dev_path', default='klue-re-v1.1_dev.csv', type=str)
+    parser.add_argument('--dev_path', default='dev-v.0.0.2.csv', type=str)
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=args.num_labels)
 
     # Add unk tokens 
-    #unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
-    #args.tokenizer.add_tokens(unk_list)
+    unk_list = load_pkl(os.path.join(DATA_DIR, 'unk_tokens.pkl'))
+    args.tokenizer.add_tokens(unk_list)
     model.resize_token_embeddings(len(args.tokenizer))
     
     # Load Model

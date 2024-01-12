@@ -16,7 +16,7 @@ def train_tapt(args):
     # Read txt file which is consisted of sentences from train.csv
     dataset = LineByLineTextDataset(
         tokenizer=tokenizer,
-        file_path=os.path.join(DATA_DIR, 'merged-unk.txt'),
+        file_path=os.path.join(DATA_DIR, 'merged.txt'),
         block_size=128 # block size needs to be modified to max_position_embeddings
     )
 
@@ -26,7 +26,6 @@ def train_tapt(args):
 
     # need to change arguments 
     training_args = TrainingArguments(
-        output_dir=PARAM_DIR,
         overwrite_output_dir=True,
         learning_rate=5e-05,
         num_train_epochs=100, 
@@ -62,7 +61,7 @@ def train_tapt(args):
     trainer.scheduler = scheduler
 
     trainer.train()
-    torch.save(model.state_dict(), os.path.join(f'{training_args.output_dir}/Tapt-{args.model_name.split("/")[-1]}-pretrained.pt'))
+    torch.save(model.state_dict(), os.path.join(f'{PARAM_DIR}/Tapt-{args.model_name.split("/")[-1]}-pretrained.pt'))
 
 
 if __name__ == '__main__':
@@ -84,7 +83,7 @@ if __name__ == '__main__':
         '--entity', '-e', default='boostcamp-ai-tech-01', type=str
     )
     parser.add_argument(
-        '--project', default='kunha98', type=str
+        '--project', default='Level02', type=str
     )
 
     args = parser.parse_args()
