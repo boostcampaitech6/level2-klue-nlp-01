@@ -3,7 +3,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import torch
 from transformers import AutoTokenizer, DataCollatorForLanguageModeling, AutoModelForMaskedLM, get_linear_schedule_with_warmup, LineByLineTextDataset, Trainer, TrainingArguments, EarlyStoppingCallback 
-#import wandb
+import wandb
 import argparse
 from settings import * 
 
@@ -40,7 +40,7 @@ def train_tapt(args):
         logging_steps=100,
         evaluation_strategy='epoch',
         resume_from_checkpoint=True,
-        fp16=False,
+        fp16=True,
         fp16_opt_level='O1',
         load_best_model_at_end=True,
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # model name 
     parser.add_argument(
-        '--model_name', default='kykim/electra-kor-base', type=str 
+        '--model_name', default='klue/roberta-large', type=str 
     )
 
     parser.add_argument(
@@ -83,25 +83,24 @@ if __name__ == '__main__':
         '--learning_rate', default=5e-5, type=float
     )
 
-    # # wandb
-    # parser.add_argument(
-    #     '--wandb', default=True, action='store_true'
-    # )
-    # parser.add_argument(
-    #     '--entity', '-e', default='boostcamp-ai-tech-01', type=str
-    # )
-    # parser.add_argument(
-    #     '--project', default='sujong', type=str
-    # )
+    # wandb
+    parser.add_argument(
+        '--wandb', default=True, action='store_true'
+    )
+    parser.add_argument(
+        '--entity', '-e', default='boostcamp-ai-tech-01', type=str
+    )
+    parser.add_argument(
+        '--project', default='Level02', type=str
+    )
 
     args = parser.parse_args()
 
-    # if args.wandb:
-    #     wandb.init(
-    #         entity=args.entity,
-    #         project= args.project, 
-    #         name=f'{args.model_name}-tapt-pretraining',
-    #     )
+    if args.wandb:
+        wandb.init(
+            entity=args.entity,
+            project= args.project, 
+            name=f'{args.model_name}-tapt-pretraining',
+        )
     
     train_tapt(args)
-

@@ -1,9 +1,11 @@
 '''
 Author: DongEon, Kim
 '''
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import torch, argparse, hanja 
-import os, types, pickle, yaml
+import types, pickle, yaml
 
 import numpy as np 
 import pandas as pd 
@@ -150,6 +152,27 @@ def plot_hist(li: list, bins=50, title=None, xlabel=None, ylabel=None, f_name='f
     if save:
         plt.savefig(os.path.join(FIG_DIR, f'{f_name}'), dpi=200)
     plt.show()
+
+def tapt_apply(pretrained_dict, model):
+    model_dict = model.state_dict() # 현재 신경망 상태 로드
+    # 1. filter out unnecessary keys
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    # 2. overwrite entries in the existing state dict
+    model_dict.update(pretrained_dict) 
+    # 3. load the new state dict
+    model.load_state_dict(model_dict)
+    """
+    #HEAD만(나머지 freeze)
+    for name, param in model.named_parameters():
+        if name.split('.')[0] == 'classifier':
+            pass
+        else :
+            param.requires_grad = False
+    for name, param in model.named_parameters():
+        print(name, param.requires_grad)
+    """
+    return model
+
 
 
 # data split

@@ -13,8 +13,8 @@ import numpy as np
 import argparse
 from tqdm.auto import tqdm 
 
-from utils.utils import num_to_label, load_pkl
-from utils.preprocessing import preprocess
+from utils31.utils import num_to_label, load_pkl
+from utils31.preprocessing import preprocess
 from data_utils.data_utils import get_dataloader
 from settings import * 
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', required=True, type=str)
     parser.add_argument('--inference', required=True, type=str) # test or dev
     parser.add_argument('--batch_size', '-b', default=32)
-    parser.add_argument('--num_labels', default=30, type=int)
+    parser.add_argument('--num_labels', default=31, type=int)
     parser.add_argument('--f_name', default='submission')
     parser.add_argument('--max_length', default=256)
     parser.add_argument('--test_path', default='test.csv', type=str)
-    parser.add_argument('--dev_path', default='dev-v.0.0.2.csv', type=str)
+    parser.add_argument('--dev_path', default='dev-v.0.0.2_31.csv', type=str)
     args = parser.parse_args()
     args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     pred_answer = num_to_label(pred_answer)
     
     if args.inference == 'dev':
-        label_list = ["no_relation", "org:dissolved", "org:founded", "org:place_of_headquarters", 
+        label_list = ["per:no_relation","org:no_relation", "org:dissolved", "org:founded", "org:place_of_headquarters", 
                 "org:alternate_names", "org:member_of", "org:members","org:political/religious_affiliation", 
                 "org:product", "org:founded_by","org:top_members/employees", "org:number_of_employees/members", 
                 "per:date_of_birth", "per:date_of_death", "per:place_of_birth", "per:place_of_death", 
