@@ -53,7 +53,7 @@ docker run -itd --runtime=nvidia --name dgl_tuto -p 8888:8888 -v C:\Users\Name\:
 # Docker-ce 19.03 or later
 docker run -itd --gpus all --name boostcamp -p 8888:8888 -v C:\Users\Name\:/workspace [filename]:1.0 /bin/bash
 ```
-
+  
 **4.use jupyter notebook**
 ```
 docker exec -it boostcamp bash
