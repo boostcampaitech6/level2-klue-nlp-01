@@ -16,7 +16,7 @@ def train_tapt(args):
     # Read txt file which is consisted of sentences from train.csv
     dataset = LineByLineTextDataset(
         tokenizer=tokenizer,
-        file_path=os.path.join(DATA_DIR, 'merged.txt'),
+        file_path=os.path.join(DATA_DIR, 'merged-unk.txt'),
         block_size=128 # block size needs to be modified to max_position_embeddings
     )
 

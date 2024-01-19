@@ -55,6 +55,7 @@ def train(args):
         per_device_eval_batch_size=args.batch_size, 
         #warmup_steps=500,
         warmup_ratio=0.1, 
+        label_smoothing_factor=0.1,
         weight_decay=args.weight_decay, 
         logging_dir = './logs', 
         logging_steps=100, 
@@ -71,7 +72,7 @@ def train(args):
     
     # optimizer
     optimizer = AdamP(model.parameters(), lr=args.learning_rate, eps=1e-8, weight_decay=0.01)
-    lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=0)
+    lr_scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=1e-6)
     
     trainer = CustomTrainer(
         model=model, 
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         '--num_epochs', default=8, type=int
     )
     parser.add_argument(
-        '--batch_size', '-b', default=64, type=int
+        '--batch_size', '-b', default=32, type=int
     )
     parser.add_argument(
         '--weight_decay', '-wd', default=0.01, type=float
@@ -123,10 +124,10 @@ if __name__ == '__main__':
     
     # path 
     parser.add_argument(
-        '--train_path', default='train-v.0.0.2.csv', type=str
+        '--train_path', default='train-v.0.0.3.csv', type=str
     )
     parser.add_argument(
-        '--dev_path', default='dev-v.0.0.2.csv', type=str
+        '--dev_path', default='dev-v.0.0.3.csv', type=str
     )
     parser.add_argument(
         '--test_path', default='test_data.csv', type=str
@@ -188,5 +189,4 @@ if __name__ == '__main__':
             }
         )
     train(args)
-
 

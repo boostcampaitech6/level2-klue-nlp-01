@@ -185,10 +185,10 @@ if __name__ == '__main__':
         '--test_size', default=0.2, type=float
     )
     parser.add_argument(
-        '--version', '-V', default='v.0.0.2',type=str 
+        '--version', '-V', default='v.0.0.3',type=str 
     )
     parser.add_argument(
-        '--train_path', default='train/train.csv', type=str
+        '--train_path', default='train/train_1.1_eh.csv', type=str
     )
     
     args = parser.parse_args()
